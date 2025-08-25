@@ -1736,3 +1736,90 @@ html {
 ::-webkit-scrollbar-thumb:hover {
     background: linear-gradient(135deg, #f7931e, #ff6b35);
 }
+
+/* Loading and Error States for Dynamic Content */
+.loading-projects,
+.loading-education,
+.no-projects,
+.no-education,
+.error-loading-projects,
+.error-loading-education {
+    text-align: center;
+    padding: 40px 20px;
+    color: rgba(255, 255, 255, 0.7);
+    font-family: 'Inter', sans-serif;
+}
+
+.loading-projects p,
+.loading-education p {
+    font-size: 18px;
+    margin: 0;
+    position: relative;
+}
+
+.loading-projects p::after,
+.loading-education p::after {
+    content: '';
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    margin-left: 10px;
+    border: 2px solid rgba(255, 107, 53, 0.3);
+    border-radius: 50%;
+    border-top-color: #ff6b35;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { 
+        transform: rotate(360deg); 
+    }
+}
+
+.no-projects p,
+.no-education p {
+    font-size: 16px;
+    margin: 0;
+    opacity: 0.8;
+}
+
+.error-loading-projects,
+.error-loading-education {
+    background: rgba(220, 53, 69, 0.1);
+    border: 1px solid rgba(220, 53, 69, 0.3);
+    border-radius: 12px;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.error-loading-projects p,
+.error-loading-education p {
+    color: #ff6b6b;
+    font-size: 16px;
+    margin: 0 0 10px 0;
+    font-weight: 500;
+}
+
+.error-loading-projects small,
+.error-loading-education small {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 12px;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+/* Dynamic content fade-in animation */
+.project-card,
+.education-item {
+    animation: fadeInUp 0.6s ease-out forwards;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

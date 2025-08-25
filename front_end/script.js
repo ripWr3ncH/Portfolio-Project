@@ -21,7 +21,7 @@ window.addEventListener('load', () => {
     }, 1500);
 });
 
-// DOM Elements
+// DOM                <img class="project-img" src="${project.image_path ? 'http://localhost/MyPortfolio/backend/' + project.image_path : ''}" alt="${project.title}" style="${project.image_path ? 'display: block;' : 'display: none;'}">`Elements
 const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
 const nav = document.querySelector('.nav');
 const navLinks = document.querySelectorAll('.nav-links a');
@@ -604,6 +604,10 @@ function getAllProjects() {
 
 // Initialize projects on page load
 document.addEventListener('DOMContentLoaded', function() {
+    // Load projects and education from backend
+    loadProjectsFromBackend();
+    loadEducationFromBackend();
+    
     // Check if any project images are already set and load them
     const projectCards = document.querySelectorAll('[data-project-id]');
     projectCards.forEach(card => {
@@ -617,3 +621,233 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+// Function to load projects from backend API
+async function loadProjectsFromBackend() {
+    const projectsGrid = document.getElementById('projectsGrid');
+    
+    try {
+        // Show loading state
+        projectsGrid.innerHTML = '<div class="loading-projects"><p>Loading projects...</p></div>';
+        
+        // Fetch projects from backend API
+        const response = await fetch(`http://localhost/MyPortfolio/backend/api/projects.php?t=${Date.now()}`);
+        const data = await response.json();
+        
+        if (data.success && data.data.length > 0) {
+            // Clear loading state and render projects
+            projectsGrid.innerHTML = '';
+            data.data.forEach(project => {
+                renderProject(project);
+            });
+            
+            // Re-observe the new project cards for animations
+            const newProjectCards = document.querySelectorAll('.project-card');
+            newProjectCards.forEach(card => observer.observe(card));
+        } else {
+            // No projects found
+            projectsGrid.innerHTML = '<div class="no-projects"><p>No projects available at the moment.</p></div>';
+        }
+    } catch (error) {
+        console.error('Error loading projects:', error);
+        // Fallback to show an error message
+        projectsGrid.innerHTML = `
+            <div class="error-loading-projects">
+                <p>Unable to load projects. Please try again later.</p>
+                <small>Error: ${error.message}</small>
+            </div>
+        `;
+    }
+}
+
+// Function to render a single project
+function renderProject(project) {
+    const projectsGrid = document.getElementById('projectsGrid');
+    
+    // Parse technologies JSON
+    let technologies = [];
+    try {
+        technologies = typeof project.technologies === 'string' 
+            ? JSON.parse(project.technologies) 
+            : project.technologies || [];
+    } catch (e) {
+        console.error('Error parsing technologies for project:', project.title, e);
+        technologies = [];
+    }
+    
+    // Create tech tags HTML
+    const techTagsHTML = technologies.map(tech => 
+        `<span class="tech-tag">${tech}</span>`
+    ).join('');
+    
+    // Determine project icon based on technologies or title
+    const projectIcon = getProjectIcon(project.title, technologies);
+    const projectType = getProjectType(project.title, technologies);
+    
+    // Create project card HTML
+    const projectCard = document.createElement('div');
+    projectCard.className = `project-card ${project.is_featured ? 'featured' : ''}`;
+    projectCard.setAttribute('data-project-id', project.id);
+    
+    projectCard.innerHTML = `
+        <a href="${project.project_url || '#'}" target="_blank" class="project-image-link" data-project-url="${project.project_url || '#'}">
+            <div class="project-image">
+                <img class="project-img" src="${project.image_path ? '../backend/' + project.image_path : ''}" alt="${project.title}" style="${project.image_path ? 'display: block;' : 'display: none;'}">
+                <div class="project-placeholder ${project.is_featured ? 'featured' : ''}" style="${project.image_path ? 'display: none;' : 'display: flex;'}">
+                    <div class="project-icon">${projectIcon}</div>
+                    <span>${projectType}</span>
+                </div>
+            </div>
+        </a>
+        <div class="project-content">
+            <h3>${project.title}</h3>
+            <p>${project.description}</p>
+            <div class="project-tech">
+                ${techTagsHTML}
+            </div>
+            ${project.is_featured && project.github_url ? `
+                <div class="project-links">
+                    <a href="${project.github_url}" target="_blank" class="project-link">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                        </svg>
+                        Documentation
+                    </a>
+                </div>
+            ` : ''}
+        </div>
+    `;
+    
+    projectsGrid.appendChild(projectCard);
+}
+
+// Function to determine project icon based on title and technologies
+function getProjectIcon(title, technologies) {
+    const titleLower = title.toLowerCase();
+    const techString = technologies.join(' ').toLowerCase();
+    
+    if (titleLower.includes('portfolio') || titleLower.includes('website')) return '💻';
+    if (titleLower.includes('algorithm') || titleLower.includes('visualizer') || techString.includes('algorithm')) return '📊';
+    if (titleLower.includes('e-commerce') || titleLower.includes('shop') || titleLower.includes('store')) return '🛒';
+    if (titleLower.includes('student') || titleLower.includes('management') || titleLower.includes('university')) return '🎓';
+    if (titleLower.includes('mobile') || titleLower.includes('app') || techString.includes('react native')) return '📱';
+    if (titleLower.includes('game') || titleLower.includes('gaming')) return '🎮';
+    if (titleLower.includes('ai') || titleLower.includes('machine learning') || titleLower.includes('neural')) return '🤖';
+    if (techString.includes('react') || techString.includes('vue') || techString.includes('angular')) return '⚛️';
+    if (techString.includes('node') || techString.includes('express')) return '🟢';
+    if (techString.includes('python') || techString.includes('django') || techString.includes('flask')) return '🐍';
+    if (techString.includes('database') || techString.includes('mysql') || techString.includes('mongodb')) return '🗄️';
+    
+    return '💻'; // Default icon
+}
+
+// Function to determine project type based on title and technologies
+function getProjectType(title, technologies) {
+    const titleLower = title.toLowerCase();
+    const techString = technologies.join(' ').toLowerCase();
+    
+    if (titleLower.includes('portfolio') || titleLower.includes('website')) return 'Web App';
+    if (titleLower.includes('algorithm') || titleLower.includes('visualizer')) return 'Data Structure';
+    if (titleLower.includes('e-commerce') || titleLower.includes('shop')) return 'E-commerce';
+    if (titleLower.includes('student') || titleLower.includes('university')) return 'University Project';
+    if (titleLower.includes('mobile') || titleLower.includes('app')) return 'Mobile App';
+    if (titleLower.includes('game')) return 'Game';
+    if (titleLower.includes('ai') || titleLower.includes('machine learning')) return 'AI/ML';
+    if (techString.includes('react') || techString.includes('vue') || techString.includes('angular')) return 'Frontend App';
+    if (techString.includes('api') || techString.includes('backend')) return 'Backend API';
+    
+    return 'Web Project'; // Default type
+}
+
+// Function to load education from backend API
+async function loadEducationFromBackend() {
+    const educationTimeline = document.getElementById('educationTimeline');
+    
+    try {
+        // Show loading state
+        educationTimeline.innerHTML = '<div class="loading-education"><p>Loading education...</p></div>';
+        
+        // Fetch education from backend API
+        const response = await fetch(`http://localhost/MyPortfolio/backend/api/education.php?t=${Date.now()}`);
+        const data = await response.json();
+        
+        if (data.success && data.data.length > 0) {
+            // Clear loading state and render education
+            educationTimeline.innerHTML = '';
+            data.data.forEach(education => {
+                renderEducation(education);
+            });
+            
+            // Re-observe the new education items for animations
+            const newEducationItems = document.querySelectorAll('.education-item');
+            newEducationItems.forEach((item, index) => {
+                setTimeout(() => {
+                    observer.observe(item);
+                }, index * 100);
+            });
+        } else {
+            // No education found
+            educationTimeline.innerHTML = '<div class="no-education"><p>No education information available.</p></div>';
+        }
+    } catch (error) {
+        console.error('Error loading education:', error);
+        // Fallback to show an error message
+        educationTimeline.innerHTML = `
+            <div class="error-loading-education">
+                <p>Unable to load education information. Please try again later.</p>
+                <small>Error: ${error.message}</small>
+            </div>
+        `;
+    }
+}
+
+// Function to render a single education item
+function renderEducation(education) {
+    const educationTimeline = document.getElementById('educationTimeline');
+    
+    // Parse highlights JSON
+    let highlights = [];
+    try {
+        highlights = typeof education.highlights === 'string' 
+            ? JSON.parse(education.highlights) 
+            : education.highlights || [];
+    } catch (e) {
+        console.error('Error parsing highlights for education:', education.title, e);
+        highlights = [];
+    }
+    
+    // Create highlights HTML
+    const highlightsHTML = highlights.map(highlight => 
+        `<span class="highlight-badge">${highlight}</span>`
+    ).join('');
+    
+    // Format date range
+    const dateRange = education.end_date && education.end_date.toLowerCase() !== 'present' 
+        ? `${education.start_date} - ${education.end_date}`
+        : `${education.start_date} - Present`;
+    
+    // Create education item HTML
+    const educationItem = document.createElement('div');
+    educationItem.className = 'education-item timeline-item';
+    
+    educationItem.innerHTML = `
+        <div class="education-icon">
+            <div class="icon-wrapper">
+                <span>${education.icon || '🎓'}</span>
+            </div>
+        </div>
+        <div class="education-content">
+            <span class="education-date">${dateRange}</span>
+            <h3>${education.title}</h3>
+            <p class="institution">${education.institution}</p>
+            <p class="education-details">${education.description || ''}</p>
+            ${highlights.length > 0 ? `
+                <div class="education-highlights">
+                    ${highlightsHTML}
+                </div>
+            ` : ''}
+        </div>
+    `;
+    
+    educationTimeline.appendChild(educationItem);
+}
