@@ -900,6 +900,18 @@ p {
     position: relative;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.project-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.project-image-link:hover .project-img {
+    transform: scale(1.05);
 }
 
 .project-image::after {
@@ -912,6 +924,7 @@ p {
     background: rgba(255, 107, 53, 0);
     transition: all 0.3s ease;
     pointer-events: none;
+    z-index: 1;
 }
 
 .project-image-link:hover .project-image::after {
@@ -929,6 +942,8 @@ p {
     gap: 10px;
     color: #888;
     transition: all 0.3s ease;
+    position: relative;
+    z-index: 2;
 }
 
 .project-placeholder.featured {
@@ -1249,6 +1264,16 @@ p {
 
     .nav {
         display: none;
+    }
+
+    .header .container {
+        grid-template-columns: 1fr auto auto;
+        gap: 15px;
+    }
+
+    .hire-btn {
+        justify-self: center;
+        margin-right: 10px;
     }
 
     .hero {
