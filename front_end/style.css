@@ -1,5 +1,5 @@
 /* Google Fonts Import */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Bukhari+Script&display=swap');
 
 /* Loading Animation */
 .loading-screen {
@@ -100,6 +100,23 @@
     box-sizing: border-box;
 }
 
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    max-width: 100%;
+}
+
+/* Prevent horizontal overflow on all elements */
+* {
+    overflow-wrap: break-word;
+}
+
+img, video, canvas, audio, iframe, embed, object {
+    max-width: 100%;
+    height: auto;
+}
+
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
     line-height: 1.6;
@@ -110,6 +127,14 @@ body {
     letter-spacing: -0.01em;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    width: 100%;
+    max-width: 100vw;
+}
+
+html {
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100vw;
 }
 
 /* Global Typography Improvements */
@@ -139,8 +164,7 @@ p {
 .about-content,
 .timeline,
 .projects-grid,
-.contact-content,
-.works-grid {
+.contact-content {
     opacity: 0;
     transform: translateY(30px);
 }
@@ -175,13 +199,22 @@ p {
     justify-self: start;
 }
 
-.logo-placeholder {
-    background-color: #f0f0f0;
-    color: #666;
-    padding: 15px 25px;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 600;
+.logo-text {
+    font-family: 'Bukhari Script', cursive;
+    font-size: 32px;
+    font-weight: 700;
+    color: #ffffff;
+    text-decoration: none;
+    letter-spacing: 1px;
+    background: linear-gradient(135deg, #ff6b35, #f7931e);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    transition: all 0.3s ease;
+}
+
+.logo-text:hover {
+    transform: scale(1.05);
 }
 
 .nav {
@@ -1614,9 +1647,8 @@ p {
         font-size: 12px;
     }
 
-    .logo-placeholder {
-        padding: 10px 15px;
-        font-size: 12px;
+    .logo-text {
+        font-size: 24px;
     }
 }
 
@@ -1821,5 +1853,61 @@ html {
     to {
         opacity: 1;
         transform: translateY(0);
+    }
+}
+
+/* Mobile Overflow Prevention - Final Safety Net */
+@media (max-width: 768px) {
+    * {
+        max-width: 100vw !important;
+        box-sizing: border-box !important;
+    }
+    
+    .container,
+    .hero-content,
+    .profile-card,
+    .intro-section,
+    .skills,
+    .projects-section,
+    .education-section,
+    .contact-section {
+        width: 100% !important;
+        max-width: 100vw !important;
+        padding-left: min(20px, 5vw) !important;
+        padding-right: min(20px, 5vw) !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        overflow-x: hidden !important;
+    }
+    
+    /* Ensure images don't overflow */
+    img {
+        max-width: 100% !important;
+        height: auto !important;
+    }
+    
+    /* Fix profile image on very small screens */
+    .profile-image {
+        width: min(260px, 80vw) !important;
+        height: min(260px, 80vw) !important;
+        margin: 0 auto 35px !important;
+    }
+    
+    /* Ensure skill logos don't cause overflow */
+    .skill-logos-track {
+        width: 100% !important;
+        overflow-x: hidden !important;
+    }
+    
+    /* Fix project cards */
+    .project-card {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+    }
+    
+    /* Fix any fixed positioned elements */
+    .scroll-buttons {
+        right: min(25px, 5vw) !important;
     }
 }
