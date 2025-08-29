@@ -127,7 +127,7 @@ const observer = new IntersectionObserver((entries) => {
 }, observerOptions);
 
 // Observe elements for animation
-const animateElements = document.querySelectorAll('.section-header, .profile-card, .intro-section, .about-content, .timeline, .projects-grid, .contact-content, .works-grid');
+const animateElements = document.querySelectorAll('.section-header, .profile-card, .intro-section, .about-content, .timeline, .projects-grid, .contact-content');
 animateElements.forEach(el => observer.observe(el));
 
 // Contact Form Handling
@@ -271,7 +271,6 @@ style.textContent = `
     .timeline,
     .projects-grid,
     .contact-content,
-    .works-grid,
     .timeline-item,
     .work-item {
         opacity: 0;
@@ -767,27 +766,32 @@ async function loadEducationFromBackend() {
         // Show loading state
         educationTimeline.innerHTML = '<div class="loading-education"><p>Loading education...</p></div>';
         
-        // Fetch education from backend API
-        const response = await fetch(`http://localhost/MyPortfolio/backend/api/education.php?t=${Date.now()}`);
+        // Fetch education from backend API with cache busting
+        const response = await fetch(`http://localhost/MyPortfolio/backend/api/education.php?t=${Date.now()}&v=3`, {
+            cache: 'no-cache',
+            headers: {
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache'
+            }
+        });
         const data = await response.json();
         
         if (data.success && data.data.length > 0) {
-            // Clear loading state and render education
-            educationTimeline.innerHTML = '';
-            data.data.forEach(education => {
-                renderEducation(education);
-            });
+            // Clear loading state and render all education at once
+            renderEducation(data.data);
             
             // Re-observe the new education items for animations
             const newEducationItems = document.querySelectorAll('.education-item');
             newEducationItems.forEach((item, index) => {
                 setTimeout(() => {
-                    observer.observe(item);
+                    if (typeof observer !== 'undefined') {
+                        observer.observe(item);
+                    }
                 }, index * 100);
             });
         } else {
             // No education found
-            educationTimeline.innerHTML = '<div class="no-education"><p>No education information available.</p></div>';
+            educationTimeline.innerHTML = '<div class="error-loading-education"><p>No education information available.</p></div>';
         }
     } catch (error) {
         console.error('Error loading education:', error);
@@ -801,53 +805,82 @@ async function loadEducationFromBackend() {
     }
 }
 
-// Function to render a single education item
-function renderEducation(education) {
+// Function to render education timeline
+function renderEducation(educationData) {
     const educationTimeline = document.getElementById('educationTimeline');
+    educationTimeline.innerHTML = ''; // Clear existing content
     
-    // Parse highlights JSON
-    let highlights = [];
-    try {
-        highlights = typeof education.highlights === 'string' 
-            ? JSON.parse(education.highlights) 
-            : education.highlights || [];
-    } catch (e) {
-        console.error('Error parsing highlights for education:', education.title, e);
-        highlights = [];
+    if (!educationData || educationData.length === 0) {
+        educationTimeline.innerHTML = '<div class="error-loading-education"><p>No education data available</p></div>';
+        return;
     }
     
-    // Create highlights HTML
-    const highlightsHTML = highlights.map(highlight => 
-        `<span class="highlight-badge">${highlight}</span>`
-    ).join('');
-    
-    // Format date range
-    const dateRange = education.end_date && education.end_date.toLowerCase() !== 'present' 
-        ? `${education.start_date} - ${education.end_date}`
-        : `${education.start_date} - Present`;
-    
-    // Create education item HTML
-    const educationItem = document.createElement('div');
-    educationItem.className = 'education-item timeline-item';
-    
-    educationItem.innerHTML = `
-        <div class="education-icon">
-            <div class="icon-wrapper">
-                <span>${education.icon || '🎓'}</span>
+    educationData.forEach((education, index) => {
+        // Clean any potential emojis from text content
+        const cleanText = (text) => {
+            if (!text) return '';
+            // Remove all emojis and special characters that might cause issues
+            return text.replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|📚|📖|🏫|🎯|⭐|✨|🌟|💡|🔥|👨‍|👩‍|📋|📊|🏆|🎖️|🥇|🥈|🥉/gu, '').trim();
+        };
+        
+        // Parse highlights JSON
+        let highlights = [];
+        try {
+            highlights = typeof education.highlights === 'string' 
+                ? JSON.parse(education.highlights) 
+                : education.highlights || [];
+        } catch (e) {
+            console.error('Error parsing highlights for education:', education.title, e);
+            highlights = [];
+        }
+        
+        // Clean highlights from emojis
+        const cleanHighlights = highlights.map(highlight => cleanText(highlight)).filter(h => h.length > 0);
+        
+        // Create highlights HTML
+        const highlightsHTML = cleanHighlights.map(highlight => 
+            `<span class="highlight-badge">${highlight}</span>`
+        ).join('');
+        
+        // Format date range
+        const startDate = cleanText(education.start_date) || 'Start Date';
+        const endDate = education.end_date && education.end_date.toLowerCase() !== 'present' 
+            ? cleanText(education.end_date)
+            : 'Present';
+        const dateRange = `${startDate} - ${endDate}`;
+        
+        // Create education item HTML
+        const educationItem = document.createElement('div');
+        educationItem.className = 'education-item';
+        educationItem.style.animationDelay = `${index * 0.2}s`;
+        
+        educationItem.innerHTML = `
+            <div class="education-content">
+                <div class="education-date">${dateRange}</div>
+                <h3>${cleanText(education.title) || 'Education Title'}</h3>
+                <div class="institution">${cleanText(education.institution) || 'Institution'}</div>
+                <div class="education-details">${cleanText(education.description) || ''}</div>
+                ${cleanHighlights.length > 0 ? `
+                    <div class="education-highlights">
+                        ${highlightsHTML}
+                    </div>
+                ` : ''}
             </div>
-        </div>
-        <div class="education-content">
-            <span class="education-date">${dateRange}</span>
-            <h3>${education.title}</h3>
-            <p class="institution">${education.institution}</p>
-            <p class="education-details">${education.description || ''}</p>
-            ${highlights.length > 0 ? `
-                <div class="education-highlights">
-                    ${highlightsHTML}
-                </div>
-            ` : ''}
-        </div>
-    `;
+        `;
+        
+        educationTimeline.appendChild(educationItem);
+    });
     
-    educationTimeline.appendChild(educationItem);
+    // Add entrance animations
+    const items = educationTimeline.querySelectorAll('.education-item');
+    items.forEach((item, index) => {
+        item.style.opacity = '0';
+        item.style.transform = 'translateX(-30px)';
+        
+        setTimeout(() => {
+            item.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+            item.style.opacity = '1';
+            item.style.transform = 'translateX(0)';
+        }, index * 150);
+    });
 }
