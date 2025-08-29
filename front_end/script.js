@@ -21,7 +21,7 @@ window.addEventListener('load', () => {
     }, 1500);
 });
 
-// DOM                <img class="project-img" src="${project.image_path ? 'http://localhost/MyPortfolio/backend/' + project.image_path : ''}" alt="${project.title}" style="${project.image_path ? 'display: block;' : 'display: none;'}">`Elements
+// DOM Elements
 const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
 const nav = document.querySelector('.nav');
 const navLinks = document.querySelectorAll('.nav-links a');
@@ -131,17 +131,21 @@ const animateElements = document.querySelectorAll('.section-header, .profile-car
 animateElements.forEach(el => observer.observe(el));
 
 // Contact Form Handling
-contactForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    
-    const formData = new FormData(contactForm);
-    const name = formData.get('name');
-    const email = formData.get('email');
-    const message = formData.get('message');
+if (contactForm) {
+    console.log('Contact form found, setting up event listener');
+    contactForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        console.log('Contact form submitted!');
+        
+        const formData = new FormData(contactForm);
+        const name = formData.get('name').trim();
+        const email = formData.get('email').trim();
+        const subject = formData.get('subject').trim();
+        const message = formData.get('message').trim();
     
     // Simple form validation
-    if (!name || !email || !message) {
-        showNotification('Please fill in all fields!', 'error');
+    if (!name || !email || !subject || !message) {
+        showNotification('Please fill in all required fields!', 'error');
         return;
     }
     
@@ -150,10 +154,46 @@ contactForm.addEventListener('submit', (e) => {
         return;
     }
     
-    // Simulate form submission
-    showNotification('Message sent successfully! I\'ll get back to you soon.', 'success');
-    contactForm.reset();
-});
+    // Show loading state
+    const submitBtn = contactForm.querySelector('.send-message-btn');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" class="spin"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" opacity="0.25"/><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/></svg> Sending...';
+    submitBtn.disabled = true;
+    
+    try {
+        // Send to backend API
+        const response = await fetch('http://localhost/MyPortfolio/backend/api/contact.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                name: name,
+                email: email,
+                subject: subject,
+                message: message
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showNotification(result.message || 'Message sent successfully! I\'ll get back to you soon.', 'success');
+            contactForm.reset();
+        } else {
+            showNotification(result.error || 'Something went wrong. Please try again.', 'error');
+        }
+        
+    } catch (error) {
+        console.error('Contact form error:', error);
+        showNotification('Failed to send message. Please try again or contact me directly via email.', 'error');
+    } finally {
+        // Restore button state
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    }
+    });
+}
 
 // Email validation
 function validateEmail(email) {
