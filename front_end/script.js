@@ -132,10 +132,8 @@ animateElements.forEach(el => observer.observe(el));
 
 // Contact Form Handling
 if (contactForm) {
-    console.log('Contact form found, setting up event listener');
     contactForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        console.log('Contact form submitted!');
         
         const formData = new FormData(contactForm);
         const name = formData.get('name').trim();
