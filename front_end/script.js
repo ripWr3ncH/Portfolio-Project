@@ -922,3 +922,58 @@ function renderEducation(educationData) {
         }, index * 150);
     });
 }
+
+// Typewriter Animation
+function typewriterAnimation() {
+    const words = ['Student', 'Gamer', 'Photographer', 'Web Designer'];
+    const typewriterElement = document.getElementById('typewriter');
+    const cursor = document.querySelector('.cursor');
+    
+    if (!typewriterElement) return;
+    
+    let wordIndex = 0;
+    let charIndex = 0;
+    let isDeleting = false;
+    let typeSpeed = 150;
+    
+    function type() {
+        const currentWord = words[wordIndex];
+        
+        if (isDeleting) {
+            typewriterElement.textContent = currentWord.substring(0, charIndex - 1);
+            charIndex--;
+            typeSpeed = 75;
+        } else {
+            typewriterElement.textContent = currentWord.substring(0, charIndex + 1);
+            charIndex++;
+            typeSpeed = 150;
+        }
+        
+        // Cursor blinking effect
+        cursor.style.opacity = '1';
+        
+        if (!isDeleting && charIndex === currentWord.length) {
+            // Word complete, pause then start deleting
+            typeSpeed = 2000;
+            isDeleting = true;
+        } else if (isDeleting && charIndex === 0) {
+            // Word deleted, move to next word
+            isDeleting = false;
+            wordIndex = (wordIndex + 1) % words.length;
+            typeSpeed = 500;
+        }
+        
+        setTimeout(type, typeSpeed);
+    }
+    
+    // Start the animation
+    type();
+    
+    // Cursor blinking
+    setInterval(() => {
+        cursor.style.opacity = cursor.style.opacity === '0' ? '1' : '0';
+    }, 500);
+}
+
+// Initialize typewriter animation when page loads
+document.addEventListener('DOMContentLoaded', typewriterAnimation);
