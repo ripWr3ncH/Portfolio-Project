@@ -15,9 +15,10 @@ try {
     die("Connection failed: " . $e->getMessage());
 }
 
-// Admin credentials (you should hash the password in production)
-define('ADMIN_USERNAME', 'admin');
-define('ADMIN_PASSWORD', 'admin123'); // Change this password!
+// Admin credentials with secure password hashing
+define('ADMIN_USERNAME', 'dewan');
+// Hashed version of 'dewan2001zisan' - use password_hash() to generate
+define('ADMIN_PASSWORD_HASH', '$2y$10$2J.lN.PTHJWPLqX0qXhg/OkfnOmirlFQu.3CJxJ3FZ1OJ52Hw8yem');
 
 // Session configuration
 if (session_status() === PHP_SESSION_NONE) {
@@ -76,6 +77,32 @@ function deleteImage($filename, $uploadDir = '../uploads/projects/') {
     if (file_exists($filePath)) {
         unlink($filePath);
     }
+}
+
+// Security helper functions
+function generatePasswordHash($password) {
+    return password_hash($password, PASSWORD_DEFAULT);
+}
+
+function verifyPassword($password, $hash) {
+    return password_verify($password, $hash);
+}
+
+// Cookie management functions
+function setRememberMeCookie($username, $days = 30) {
+    $token = hash('sha256', $username . 'portfolio_secret_key');
+    $expire = time() + (86400 * $days);
+    setcookie('admin_remember_token', $token, $expire, '/');
+    return $token;
+}
+
+function validateRememberMeToken($token) {
+    $validToken = hash('sha256', ADMIN_USERNAME . 'portfolio_secret_key');
+    return hash_equals($validToken, $token);
+}
+
+function clearRememberMeCookie() {
+    setcookie('admin_remember_token', '', time() - 3600, '/');
 }
 
 // Helper function to get project statistics

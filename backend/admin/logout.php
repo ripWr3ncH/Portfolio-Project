@@ -1,6 +1,9 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+require_once '../config/database.php';
+
+// Clear remember me cookie if it exists
+if (isset($_COOKIE['admin_remember_token'])) {
+    clearRememberMeCookie();
 }
 
 // Destroy session

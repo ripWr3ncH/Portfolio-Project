@@ -1,6 +1,41 @@
 <?php
 require_once '../config/database.php';
 
+// Check for remember me cookie first
+if (!isLoggedIn() && isset($_COOKIE['admin_remember_token'])) {
+    $token = $_COOKIE['admin_remember_token'];
+    if (validateRememberMeToken($token)) {
+        $_SESSION['        @media (max-width: 480px) {
+            .login-container {
+                padding: 1.5rem 1rem;
+                margin: 1rem auto;
+            }
+            
+            .login-header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .login-header p {
+                font-size: 0.9rem;
+            }
+            
+            .checkbox-label {
+                font-size: 0.85rem;
+            }
+            
+            .checkmark {
+                width: 18px;
+                height: 18px;
+            }
+        }n'] = true;
+        $_SESSION['admin_username'] = ADMIN_USERNAME;
+        redirect('dashboard.php');
+    } else {
+        // Invalid token, remove the cookie
+        clearRememberMeCookie();
+    }
+}
+
 // Redirect if already logged in
 if (isLoggedIn()) {
     redirect('dashboard.php');
@@ -11,10 +46,17 @@ $error = '';
 if ($_POST) {
     $username = $_POST['username'] ?? '';
     $password = $_POST['password'] ?? '';
+    $remember = isset($_POST['remember_me']);
     
-    if ($username === ADMIN_USERNAME && $password === ADMIN_PASSWORD) {
+    if ($username === ADMIN_USERNAME && password_verify($password, ADMIN_PASSWORD_HASH)) {
         $_SESSION['admin_logged_in'] = true;
         $_SESSION['admin_username'] = $username;
+        
+        // Handle remember me functionality
+        if ($remember) {
+            setRememberMeCookie($username);
+        }
+        
         redirect('dashboard.php');
     } else {
         $error = 'Invalid username or password';
@@ -133,6 +175,57 @@ if ($_POST) {
             transform: translateY(-1px);
         }
         
+        /* Remember Me Checkbox Styles */
+        .checkbox-group {
+            margin-bottom: 2rem;
+        }
+        
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.8);
+            user-select: none;
+        }
+        
+        .checkbox-label input[type="checkbox"] {
+            display: none;
+        }
+        
+        .checkmark {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+            margin-right: 10px;
+            position: relative;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .checkbox-label:hover .checkmark {
+            border-color: #ff6b35;
+            background: rgba(255, 107, 53, 0.1);
+        }
+        
+        .checkbox-label input[type="checkbox"]:checked + .checkmark {
+            background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+            border-color: #ff6b35;
+        }
+        
+        .checkbox-label input[type="checkbox"]:checked + .checkmark::after {
+            content: "✓";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
         .login-btn {
             width: 100%;
             padding: 1rem 1.5rem;
@@ -168,28 +261,6 @@ if ($_POST) {
             border-left: 4px solid #ff4757;
             font-weight: 500;
             font-size: 0.9rem;
-        }
-        
-        .admin-info {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 1.25rem;
-            border-radius: 12px;
-            margin-top: 1.5rem;
-            font-size: 0.85rem;
-            color: rgba(255, 255, 255, 0.6);
-            line-height: 1.5;
-        }
-        
-        .admin-info strong {
-            color: #fff;
-            font-weight: 600;
-        }
-        
-        .admin-info em {
-            color: rgba(255, 107, 53, 0.8);
-            font-style: normal;
-            font-weight: 500;
         }
         
         /* Responsive Login Page */
@@ -268,15 +339,16 @@ if ($_POST) {
                 <input type="password" id="password" name="password" required>
             </div>
             
+            <div class="form-group checkbox-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="remember_me" name="remember_me">
+                    <span class="checkmark"></span>
+                    Remember me for 30 days
+                </label>
+            </div>
+            
             <button type="submit" class="login-btn">Login to Admin Panel</button>
         </form>
-        
-        <div class="admin-info">
-            <strong>Default Credentials:</strong><br>
-            Username: admin<br>
-            Password: admin123<br>
-            <em>Please change these credentials in production!</em>
-        </div>
     </div>
 </body>
 </html>
